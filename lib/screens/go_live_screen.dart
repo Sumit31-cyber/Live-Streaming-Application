@@ -34,7 +34,11 @@ class _GoLiveScreenState extends State<GoLiveScreen> {
         .startLiveStream(context, _titleController.text, image);
     if (channelId.isNotEmpty) {
       showSnackBar(context, 'LiveStream started successfully');
-      Navigator.pushNamed(context, BroadcastScreen.routeName);
+      Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => BroadcastScreen(
+                channelId: channelId,
+                isBroadcaster: true,
+              )));
     }
   }
 

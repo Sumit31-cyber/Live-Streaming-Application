@@ -52,7 +52,6 @@ class MyApp extends StatelessWidget {
         LoginScreen.routeName: (context) => const LoginScreen(),
         SignupScreen.routeName: (context) => const SignupScreen(),
         HomeScreen.routeName: (context) => const HomeScreen(),
-        BroadcastScreen.routeName: (context) => const BroadcastScreen(),
       },
       home: FutureBuilder(
         future: AuthMethods()

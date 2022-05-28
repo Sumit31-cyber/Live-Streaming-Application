@@ -1,3 +1,4 @@
+import 'dart:ffi';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -7,6 +8,7 @@ import 'package:twitch_clone/models/livestream.dart';
 import 'package:twitch_clone/providers/user_provider.dart';
 import 'package:twitch_clone/resources/storage_methods.dart';
 import 'package:twitch_clone/utils/utils.dart';
+import 'package:uuid/uuid.dart';
 
 class FirestoreMethods {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -55,5 +57,61 @@ class FirestoreMethods {
       showSnackBar(context, e.message!);
     }
     return channelId;
+  }
+
+  Future<void> chat(String text, String id, BuildContext context) async {
+    final user = Provider.of<UserProvider>(context, listen: false);
+
+    try {
+      String commentId = const Uuid().v1();
+      await _firestore
+          .collection('livestream')
+          .doc(id)
+          .collection('comments')
+          .doc(commentId)
+          .set({
+        'username': user.user.username,
+        'message': text,
+        'uid': user.user.uid,
+        'createdAt': DateTime.now(),
+        'commentId': commentId,
+      });
+    } on FirebaseException catch (e) {
+      showSnackBar(context, e.message!);
+    }
+  }
+
+  Future<void> updatedViewCount(String id, bool isIncrease) async {
+    try {
+      _firestore.collection('livestream').doc(id).update({
+        'viewers': FieldValue.increment(isIncrease ? 1 : -1),
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
+  Future<void> endLiveStream(String channelId) async {
+    try {
+      QuerySnapshot snap = await _firestore
+          .collection('livestream')
+          .doc(channelId)
+          .collection('comments')
+          .get();
+
+      for (int i = 0; i < snap.docs.length; i++) {
+        await _firestore
+            .collection('livestream')
+            .doc(channelId)
+            .collection('comments')
+            .doc(
+              ((snap.docs[i].data()! as dynamic)['commentId']),
+            )
+            .delete();
+      }
+      await _firestore.collection('livestream').doc(channelId).delete();
+    } catch (e) {
+      debugPrint(e.toString());
+    }
   }
 }
